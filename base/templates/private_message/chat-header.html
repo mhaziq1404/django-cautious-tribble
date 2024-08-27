@@ -1,0 +1,25 @@
+{% if group %}
+<div class="flex flex-row items-center py-4 px-6 rounded-2xl shadow bg-gray-800 text-white">
+    <div class="flex items-center justify-center h-10 w-10 rounded-full bg-pink-500 text-pink-100">
+      T
+    </div>
+    <div class="flex flex-col ml-3">
+      <div class="font-semibold text-sm">{{ group.groupchat_name }}</div>
+      <div class="text-xs text-gray-500">Active</div>
+    </div>
+    <div class="ml-auto">
+      <ul class="flex flex-row items-center space-x-2">
+        <li>
+          <a href="{% url 'block_group' group.group_name %}"
+             class="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-400 h-10 w-10 rounded-full">
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="red" class="size-5">
+                    <path fill-rule="evenodd" d="m5.965 4.904 9.131 9.131a6.5 6.5 0 0 0-9.131-9.131Zm8.07 10.192L4.904 5.965a6.5 6.5 0 0 0 9.131 9.131ZM4.343 4.343a8 8 0 1 1 11.314 11.314A8 8 0 0 1 4.343 4.343Z" clip-rule="evenodd" />
+                  </svg>
+            </span>
+          </a>
+        </li>
+      </ul>
+    </div>
+</div>
+{% endif %}

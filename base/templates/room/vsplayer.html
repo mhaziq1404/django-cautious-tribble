@@ -1,0 +1,6 @@
+<div id="player_list"
+        hx-get="{% url 'player_list' room.id %}"
+        hx-trigger="load, every 1s"
+        hx-swap="innerHTML">
+    <!-- Player list will be dynamically loaded here -->
+</div>

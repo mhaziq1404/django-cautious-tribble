@@ -1,0 +1,112 @@
+{% load static %}
+
+<header class="navbar bg-base-100 p-4 pr-6 z-50 h-[100px]">
+  <div class="flex-1">
+    <a href="{% url 'home' %}" class="btn btn-ghost text-xl">FT_TRANSCENDENCE</a>
+  </div>
+  <div class="flex-none">
+    {% if request.user.is_authenticated %}
+    <div class="flex items-center space-x-4">
+      <!-- Notification Dropdown -->
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+          <div class="indicator">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span class="badge badge-xs bg-teal-700 text-white indicator-item" id="notification-count"></span>
+          </div>
+        </div>
+        <div
+          tabindex="0"
+          class="card card-compact dropdown-content bg-indigo-100 z-[1] mt-3 w-[25rem] shadow">
+          <div class="card-body">
+            <div id="room-list" 
+                hx-get="{% url 'noti_list' %}" 
+                hx-trigger="load, every 3s" 
+                hx-swap="innerHTML">
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <a href="{% url 'messages' %}" class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+            <div class="indicator">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3 8l7.89 5.26c.58.39 1.36.39 1.94 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span class="badge badge-xs bg-teal-700 text-white indicator-item" id="message-count"></span>
+            </div>
+        </div>
+    </a>
+
+      <!-- Profile Dropdown -->
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+          <div class="w-10 rounded-full">
+            <img
+              alt=""
+              src="{{ request.user.avatar.url }}" />
+          </div>
+        </div>
+        <ul
+          tabindex="0"
+          class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
+          <li>
+            <a href="{% url 'user-profile' user.id %}" class="justify-between">
+              Profile
+              <span class="badge">New</span>
+            </a>
+          </li>
+          <li><a href="{% url 'update-user' %}">Settings</a></li>
+          <li><a href="{% url 'logout' %}">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+    {% else %}
+    <div class="flex-row">
+      <a class="btn btn-outline btn-primary" href="{% url 'login' %}">Login</a>
+    </div>
+    {% endif %}
+</header>
+
+<script src="https://unpkg.com/htmx.org"></script>
+<script>
+  document.addEventListener('htmx:afterSwap', function(event) {
+    if (event.target.id === 'notification-dropdown') {
+      const badge = document.getElementById('notification-count');
+      if (badge) {
+        const count = document.querySelectorAll('#notification-dropdown .notification-item').length;
+        badge.innerText = count > 0 ? count : '';
+      }
+    }
+
+    if (event.target.id === 'message-dropdown') {
+      const badge = document.getElementById('message-count');
+      if (badge) {
+        const count = document.querySelectorAll('#message-dropdown .message-item').length;
+        badge.innerText = count > 0 ? count : '';
+      }
+    }
+  });
+</script>

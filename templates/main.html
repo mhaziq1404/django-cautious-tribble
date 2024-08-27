@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon" />
+    <!-- <link rel="stylesheet" href="{% static 'styles/style.css' %}" /> -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/htmx.org/dist/htmx.js"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+    <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.4.1/dist/flowbite.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.4.1/dist/flowbite.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>Ft_Transcendence - PongGame!</title>
+</head>
+
+<body>
+
+    {% if messages %}
+    <div class="absolute top-0 right-0 z-50 space-y-4 p-4">
+        {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <div class="alert-dismissible flex items-center p-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800 z-100 w-[25rem]" role="alert">
+        {% elif message.tags == 'error' %}
+            <div class="alert-dismissible flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800 z-100 w-[25rem]" role="alert">
+        {% elif message.tags == 'warning' %}
+            <div class="alert-dismissible flex items-center p-4 mb-4 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-400 dark:border-yellow-800 z-100 w-[25rem]" role="alert">
+        {% else %}
+            <div class="alert-dismissible flex items-center p-4 mb-4 text-sm text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800 z-100 w-[25rem]" role="alert">
+        {% endif %}
+            <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+            </svg>
+            <span class="sr-only">{{ message.tags|title }}</span>
+            <div>
+            <span class="font-medium">{{ message.tags|title }}!</span> {{ message }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+    {% include 'navbar.html' %}
+
+    {% block content %}
+
+    {% endblock %}
+
+    <script src="{% static 'js/script.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select all alert elements
+            const alerts = document.querySelectorAll('.alert-dismissible');
+        
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    let opacity = 1;
+                    const fadeDuration = 1000; // Duration in milliseconds
+                    const fadeStep = 50; // Step interval in milliseconds
+                    const fadeAmount = fadeStep / fadeDuration;
+        
+                    const fadeOut = setInterval(function() {
+                        if (opacity <= 0) {
+                            clearInterval(fadeOut);
+                            alert.style.display = 'none';
+                        } else {
+                            opacity -= fadeAmount;
+                            alert.style.opacity = opacity;
+                        }
+                    }, fadeStep);
+                }, 5000); // Start fade-out after 5 seconds
+            });
+        });
+    </script>
+      
+      
+</body>
+
+</html>

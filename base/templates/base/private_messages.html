@@ -1,0 +1,22 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<main>
+  <div class="flex flex-row h-[calc(100vh-100px)] antialiased bg-gray-900">
+    {% include 'private_message/sidebar.html' %}
+    <div class="flex flex-col h-full w-full bg-gray-900 px-4 py-6">
+        {% include 'private_message/chat-header.html' %}
+        <div class="h-full overflow-hidden py-4">
+          <div id="chat_container" class="h-full overflow-y-auto">
+              <div id="chat_messages" class="flex flex-col justify-end gap-2 p-4">
+                {% include 'private_message/chat-messages.html' %}
+              </div>
+          </div>
+        </div>
+        {% include 'private_message/message-input.html' %}
+    </div>
+  </div>
+</main>
+
+{% endblock %}

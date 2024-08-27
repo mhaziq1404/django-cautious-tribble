@@ -1,0 +1,106 @@
+<div id="inviteModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-auto p-4">
+        <div class="flex justify-between items-center border-b pb-2">
+            <h2 class="text-xl font-bold text-gray-700">Invite a Friend</h2>
+            <button id="closeModal" class="text-gray-600 hover:text-gray-900">&times;</button>
+        </div>
+        <div class="mt-4">
+            <p class="text-gray-500">Use the link below to invite a friend to join the game:</p>
+            <div class="mt-4">
+                <input type="text" value="{{ room.invitation_link }}" class="w-full p-2 border rounded" readonly>
+            </div>
+        </div>
+        <div class="pt-4">
+            <button id="dropdownSearchButton" data-dropdown-toggle="dropdownSearch" data-dropdown-placement="bottom" class="text-white bg-indigo-500 hover:bg-indigo-600 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center w-[15.5rem]" type="button">
+                Send Invitation to Friend(s)
+                <svg class="w-2.5 h-2.5 ml-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1l4 4 4-4"/>
+                </svg>
+            </button>
+        
+            <!-- Dropdown menu -->
+            <div id="dropdownSearch" class="z-10 hidden bg-white rounded-lg shadow w-60 dark:bg-gray-700">
+                <div class="p-3">
+                    <label for="input-group-search" class="sr-only">Search</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                            </svg>
+                        </div>
+                        <input type="text" id="input-group-search" class="block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search user">
+                    </div>
+                </div>
+                <ul id="friend-list" class="h-48 px-3 pb-3 overflow-y-auto text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownSearchButton">
+                    {% for friend in friends %}
+                        <li>
+                            <div class="flex items-center pl-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600">
+                                <input id="checkbox-item-{{ forloop.counter }}" type="checkbox" value="{{ friend.id }}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                                <label for="checkbox-item-{{ forloop.counter }}" class="w-full py-2 ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300">{{ friend.username }}</label>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <form id="messageFriendsForm" action="{% url 'invite_through_message' %}" method="POST" class="w-full">
+                    {% csrf_token %}
+                    <input type="hidden" name="room_id" value="{{ room.id }}">
+                    <input type="hidden" name="friend_ids" id="friend_ids">
+                    <button type="submit" id="messageFriendsButton" class="flex items-center w-full p-3 text-sm font-medium text-teal-600 border-t border-gray-200 rounded-b-lg bg-gray-50 dark:border-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-teal-500 hover:underline">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2">
+                            <path d="M3.105 2.288a.75.75 0 0 0-.826.95l1.414 4.926A1.5 1.5 0 0 0 5.135 9.25h6.115a.75.75 0 0 1 0 1.5H5.135a1.5 1.5 0 0 0-1.442 1.086l-1.414 4.926a.75.75 0 0 0 .826.95 28.897 28.897 0 0 0 15.293-7.155.75.75 0 0 0 0-1.114A28.897 28.897 0 0 0 3.105 2.288Z" />
+                        </svg>
+                        Message Selected Friend(s)
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="flex justify-end mt-4">
+            <button id="closeModal" class="btn bg-teal-500 hover:bg-teal-600 text-white rounded px-4 py-2">Close</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inviteBtn = document.getElementById('inviteBtn');
+    const modal = document.getElementById('inviteModal');
+    const closeModal = document.getElementById('closeModal');
+
+    inviteBtn.addEventListener('click', function() {
+        modal.classList.remove('hidden');
+    });
+
+    closeModal.addEventListener('click', function() {
+        modal.classList.add('hidden');
+    });
+
+    // Optional: Close the modal when clicking outside of it
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.classList.add('hidden');
+        }
+    });
+});
+
+document.getElementById('messageFriendsForm').addEventListener('submit', function(event) {
+    event.preventDefault();  // Prevent the default form submission
+
+    // Get all selected checkboxes
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+    const selectedFriends = [];
+
+    // Collect the values of the selected checkboxes
+    checkboxes.forEach(function(checkbox) {
+        selectedFriends.push(checkbox.value);
+    });
+
+    // Set the hidden input value to the selected friend IDs
+    document.getElementById('friend_ids').value = selectedFriends.join(',');
+
+    // Now submit the form
+    this.submit();
+});
+
+</script>

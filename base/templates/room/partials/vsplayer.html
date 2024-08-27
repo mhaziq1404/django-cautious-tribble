@@ -1,0 +1,70 @@
+{% if room.opponent_type == 'vs Player' %}
+    {% if other_player != None %}
+    <div class="flex justify-between items-center h-16 p-4 my-6 rounded-lg border border-gray-100 shadow-md">
+        <div class="flex items-center">
+            <img class="rounded-full h-12 w-12" src="{{ other_player.avatar.url }}" alt="Logo" />
+            <div class="ml-2">
+                <div class="text-sm font-semibold text-gray-600">{{ other_player.username }}</div>
+                <div class="text-sm font-light text-gray-500">{{ other_player.bio }}</div>
+            </div>
+        </div>
+        {% if request.user == room.host %}
+        <div>
+            <!-- Hidden form -->
+            <form id="kickForm" action="{% url 'kick_player' %}" method="POST" style="display: none;">
+                {% csrf_token %}
+                <input type="hidden" name="player_id" value="{{ other_player.id }}">
+                <input type="hidden" name="room_id" value="{{ room.id }}">
+            </form>
+
+            <!-- Anchor tag -->
+            <a href="#" 
+            class="bg-red-400 hover:bg-red-500 p-2 rounded-full shadow-md flex justify-center items-center"
+            onclick="document.getElementById('kickForm').submit(); return false;">
+                <svg class="text-white toggle__lock w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% endif %}
+
+{% else %}
+
+{% for participant in participants %}
+    {% if participant != room.host and participant != request.user %}
+    <div class="flex justify-between items-center h-16 p-4 my-6 rounded-lg border border-gray-100 shadow-md">
+        <div class="flex items-center">
+            <img class="rounded-full h-12 w-12" src="{{ participant.avatar.url }}" alt="Logo" />
+            <div class="ml-2">
+                <div class="text-sm font-semibold text-gray-600">{{ participant.username }}</div>
+                <div class="text-sm font-light text-gray-500">{{ participant.bio }}</div>
+            </div>
+        </div>
+        {% if request.user == room.host %}
+        <div>
+            <!-- Hidden form -->
+            <form id="kickForm-{{ participant.id }}" action="{% url 'kick_player' %}" method="POST" style="display: none;">
+                {% csrf_token %}
+                <input type="hidden" name="player_id" value="{{ participant.id }}">
+                <input type="hidden" name="room_id" value="{{ room.id }}">
+            </form>
+
+            <!-- Anchor tag -->
+            <a href="#" 
+            class="bg-red-400 hover:bg-red-500 p-2 rounded-full shadow-md flex justify-center items-center"
+            onclick="document.getElementById('kickForm-{{ participant.id }}').submit(); return false;">
+                <svg class="text-white toggle__lock w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+{% endfor %}
+
+
+{% endif %}

@@ -1,0 +1,132 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<main class="bg-gray-900 h-[calc(100vh-100px)] p-4">
+    <!-- Stylish Countdown Timer -->
+    <div class="bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl text-white flex flex-col items-center justify-center p-4 text-center mb-8 shadow-lg h-24">
+      <span class="countdown font-mono text-6xl animate-pulse">
+        <span id="countdown" style="--value:10;">10</span>
+      </span>
+      <span class="mt-2 text-lg font-semibold tracking-wide">secs to the next game</span>
+    </div>
+
+    <!-- Bracket Title -->
+    <div class="mb-4 grid grid-flow-col grid-cols-3 items-center border-0 border-b-2 border-gray-700 text-center text-base md:text-lg font-bold uppercase text-white">
+      {% if opp_count == 8 %}
+        <div>Quarterfinals</div>
+        <div>Semifinals</div>
+        <div>Finals</div>
+      {% elif opp_count == 4 %}
+        <div>Semifinals</div>
+        <div>Finals</div>
+      {% endif %}
+    </div>
+
+    <!-- Bracket Layout -->
+    <div class="grid grid-flow-col grid-cols-3 items-center">
+      {% if opp_count == 8 %}
+        <!-- Quarterfinals -->
+        <div class="grid grid-flow-row grid-rows-4">
+          {% for match in matches.quarterfinals %}
+            <div class="mb-4 rounded-md bg-gray-800 px-4 py-2 text-gray-200 space-y-2 text-xs md:text-base">
+              <div class="grid grid-flow-col grid-cols-2">
+                <p class="font-semibold">{{ match.player1.username }}</p>
+                <p class="text-right">{{ match.player1_score|default:0 }}</p>
+              </div>
+              <div class="grid grid-flow-col grid-cols-2">
+                <p class="font-semibold">{{ match.player2.username }}</p>
+                <p class="text-right">{{ match.player2_score|default:0 }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Semifinals -->
+        <div class="mx-2 grid h-1/2 grid-flow-row grid-rows-2">
+          {% for match in matches.semifinals %}
+            <div class="mb-4 rounded-md bg-gray-800 px-4 py-2 text-gray-200 space-y-2 text-xs md:text-base">
+              <div class="grid grid-flow-col grid-cols-2">
+                <p class="font-semibold">{{ match.player1.username }}</p>
+                <p class="text-right">{{ match.player1_score|default:0 }}</p>
+              </div>
+              <div class="grid grid-flow-col grid-cols-2">
+                <p class="font-semibold">{{ match.player2.username }}</p>
+                <p class="text-right">{{ match.player2_score|default:0 }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Finals -->
+        <div class="mx-2 grid h-1/4 grid-flow-row grid-rows-1">
+          {% if matches.final %}
+            <div class="mb-4 rounded-md bg-gray-800 px-4 py-2 text-gray-200 space-y-2 text-xs md:text-base">
+              <div class="grid grid-flow-col grid-cols-2">
+                <p class="font-semibold">{{ matches.final.player1.username }}</p>
+                <p class="text-right">{{ matches.final.player1_score|default:0 }}</p>
+              </div>
+              <div class="grid grid-flow-col grid-cols-2">
+                <p class="font-semibold">{{ matches.final.player2.username }}</p>
+                <p class="text-right">{{ matches.final.player2_score|default:0 }}</p>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+      {% elif opp_count == 4 %}
+        <!-- Semifinals -->
+        <div class="grid grid-flow-row grid-rows-2">
+          {% for match in matches.semifinals %}
+            <div class="mb-4 rounded-md bg-gray-800 px-4 py-2 text-gray-200 space-y-2 text-xs md:text-base">
+              <div class="grid grid-flow-col grid-cols-2">
+                <p class="font-semibold">{{ match.player1.username }}</p>
+                <p class="text-right">{{ match.player1_score|default:0 }}</p>
+              </div>
+              <div class="grid grid-flow-col grid-cols-2">
+                <p class="font-semibold">{{ match.player2.username }}</p>
+                <p class="text-right">{{ match.player2_score|default:0 }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Finals -->
+        <div class="mx-2 grid h-1/2 grid-flow-row grid-rows-1">
+          {% if matches.final %}
+            <div class="mb-4 rounded-md bg-gray-800 px-4 py-2 text-gray-200 space-y-2 text-xs md:text-base">
+              <div class="grid grid-flow-col grid-cols-2">
+                <p class="font-semibold">{{ matches.final.player1.username }}</p>
+                <p class="text-right">{{ matches.final.player1_score|default:0 }}</p>
+              </div>
+              <div class="grid grid-flow-col grid-cols-2">
+                <p class="font-semibold">{{ matches.final.player2.username }}</p>
+                <p class="text-right">{{ matches.final.player2_score|default:0 }}</p>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+</main>
+
+<script>
+  // JavaScript Countdown Timer
+  let countdown = 10;
+  const countdownElement = document.getElementById('countdown');
+  const redirectUrl = "{% url 'pong' room.id %}"; // Replace 'next_url' with the name of your URL pattern
+
+  const countdownInterval = setInterval(() => {
+    countdownElement.style.setProperty('--value', countdown);
+    countdownElement.textContent = countdown; // Update the visible countdown value
+    countdown--;
+
+    if (countdown < 0) {
+      clearInterval(countdownInterval);
+      window.location.href = redirectUrl; // Redirect after countdown
+    }
+  }, 1000);
+</script>
+
+
+{% endblock %}

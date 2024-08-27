@@ -1,0 +1,44 @@
+{% if message.author == user %}
+<!-- Message from Current User -->
+<div class="col-start-6 col-end-13 p-3 rounded-lg">
+    <div class="flex items-center justify-start flex-row-reverse">
+        <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
+            {% if message.author.avatar %}
+                <img src="{{ message.author.avatar.url }}" alt="{{ message.author.username }}'s avatar" class="h-full w-full object-cover rounded-full">
+            {% else %}
+                {{ message.author.username|slice:":1" | upper}}
+            {% endif %}
+        </div>
+        <div class="relative mr-3 text-sm bg-indigo-300 py-2 px-4 shadow rounded-xl text-black">
+            <div>{{ message.body }}</div>
+            {% if message.is_seen %}
+                <div class="absolute text-xs bottom-0 right-0 -mb-5 mr-2 text-gray-500">Seen</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% else %}
+ <!-- Message from Other Users -->
+ <div class="col-start-1 col-end-8 p-3 rounded-lg">
+    <div class="flex flex-col items-start">
+        <div class="flex flex-row items-center">
+            <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
+                {% if message.author.avatar %}
+                    <a href="{% url 'user-profile' message.author.id %}" class="block h-full w-full rounded-full overflow-hidden">
+                        <img src="{{ message.author.avatar.url }}" alt="{{ message.author.username }}'s avatar" class="h-full w-full object-cover">
+                    </a>
+                {% else %}
+                    {{ message.author.username|slice:":1" | upper}}
+                {% endif %}
+            </div>
+            <div class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl text-black">
+                <div>{{ message.body }}</div>
+            </div>
+        </div>
+        <!-- Username display below the message content -->
+        <div class="text-xs text-gray-500 mt-1 ml-12">
+            @{{ message.author.username }}
+        </div>
+    </div>
+</div>
+{% endif %}
