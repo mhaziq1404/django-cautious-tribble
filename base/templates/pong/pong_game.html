@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Pong Multiplayer Game</title>
+    <style>
+        body, html { 
+            margin: 0; 
+            height: 100%; 
+            overflow: hidden; 
+        }
+        canvas { 
+            display: block; 
+            width: 100%; 
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const socket = new WebSocket('ws://' + window.location.host + '/ws/pong/');
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+        socket.onopen = function() {
+            console.log('WebSocket connection established');
+        };
+        socket.onclose = function(e) {
+            console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
+            setTimeout(function() {
+                socket = new WebSocket('ws://' + window.location.host + '/ws/pong/');
+            }, 1000);
+        };
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setClearColor(0x000000); // Black background to see the canvas
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const paddleWidth = 0.5;
+        const paddleHeight = 2;
+        const paddleDepth = 0.5;
+        const ballRadius = 0.3;
+
+        const paddleGeometry = new THREE.BoxGeometry(paddleWidth, paddleHeight, paddleDepth);
+        const paddleMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const paddle1 = new THREE.Mesh(paddleGeometry, paddleMaterial);
+        const paddle2 = new THREE.Mesh(paddleGeometry, paddleMaterial);
+        paddle1.position.set(-7, 0, 0);
+        paddle2.position.set(7, 0, 0);
+        scene.add(paddle1);
+        scene.add(paddle2);
+
+        // Wall Geometry
+        const wallGeometry = new THREE.BoxGeometry(15, 0.2, 0.5);  // Adjust the dimensions as needed
+        const wallMaterial = new THREE.MeshBasicMaterial({ color: 0x808080 });
+        const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+        wall.position.set(0, 3, 0);  // Position it as a side boundary
+        scene.add(wall);
+
+        const wallGeometry2 = new THREE.BoxGeometry(15, 0.2, 0.5);  // Adjust dimensions for horizontal orientation
+        const wallMaterial2 = new THREE.MeshBasicMaterial({ color: 0x808080 });
+        const wall2 = new THREE.Mesh(wallGeometry2, wallMaterial2);
+        wall2.position.set(0, -3, 0);  // Position it as a side boundary, adjust as needed
+        scene.add(wall2);
+
+
+        // Reset Line - Assume it's vertical for this example
+        const resetLineXPosition = 8.5; // Just behind the wall
+
+        const ballGeometry = new THREE.SphereGeometry(ballRadius, 16, 16);
+        const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+        ball.position.set(0, 0, 0);
+        scene.add(ball);
+
+        camera.position.z = 20;
+
+        let ball_speed = 0.1;
+        let ball_angle = Math.PI;
+
+        function get_random_angle(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            ball.position.x += ball_speed * Math.cos(ball_angle);
+            ball.position.y += ball_speed * Math.sin(ball_angle);
+
+            // Check collision with the reset line
+            if (Math.abs(ball.position.x) >= resetLineXPosition) {
+                // Reset ball to center
+                ball.position.set(0, 0, 0);
+                ball_speed = 0.1; // Optionally reset speed
+                ball_angle = Math.PI; // Optionally reset angle or set a random one
+            }
+
+            if ((ball.position.x - ballRadius <= paddle1.position.x + paddleWidth / 2 && ball.position.x + ballRadius >= paddle1.position.x - paddleWidth / 2 &&
+                ball.position.y - ballRadius <= paddle1.position.y + paddleHeight / 2 && ball.position.y + ballRadius >= paddle1.position.y - paddleHeight / 2) ||
+                (ball.position.x - ballRadius <= paddle2.position.x + paddleWidth / 2 && ball.position.x + ballRadius >= paddle2.position.x - paddleWidth / 2 &&
+                ball.position.y - ballRadius <= paddle2.position.y + paddleHeight / 2 && ball.position.y + ballRadius >= paddle2.position.y - paddleHeight / 2)) {
+
+                ball_angle = Math.PI - ball_angle + get_random_angle(-Math.PI / 4, Math.PI / 4);
+            }
+
+            if (ball.position.y + ballRadius >= 3 || ball.position.y - ballRadius <= -3) {
+                ball_angle = 2 * Math.PI - ball_angle;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        let lastSendTime = 0;
+        const debounceTime = 100;
+
+        document.addEventListener('keydown', function(event) {
+            let shouldSendUpdate = false;
+
+            if (event.key === 'ArrowUp') {
+                paddle1.position.y += 0.4;
+                shouldSendUpdate = true;
+            } else if (event.key === 'ArrowDown') {
+                paddle1.position.y -= 0.4;
+                shouldSendUpdate = true;
+            } else if (event.key === 'w') {
+                paddle2.position.y += 0.4;
+                shouldSendUpdate = true;
+            } else if (event.key === 's') {
+                paddle2.position.y -= 0.4;
+                shouldSendUpdate = true;
+            }
+
+            if (shouldSendUpdate) {
+                const currentTime = Date.now();
+                if (currentTime - lastSendTime > debounceTime) {
+                    const gameState = {
+                        paddle1: { y: paddle1.position.y },
+                        paddle2: { y: paddle2.position.y },
+                        ball: { x: ball.position.x, y: ball.position.y },
+                        ball_angle: ball_angle,
+                        type: 'state_update'
+                    };
+                    socket.send(JSON.stringify(gameState));
+                    lastSendTime = currentTime;
+                }
+            }
+        });
+        
+        socket.onmessage = function(e) {
+            try {
+                const data = JSON.parse(e.data);
+                if (data.type === 'state_update') {
+                    if (data.paddle1 && data.paddle2 && data.ball && 'ball_angle' in data) {
+                        // Safely update positions based on received data
+                        paddle1.position.y = data.paddle1.y;
+                        paddle2.position.y = data.paddle2.y;
+                        ball.position.x = data.ball.x;
+                        ball.position.y = data.ball.y;
+                        ball_angle = data.ball_angle;
+
+                        console.log("Updated game state:", data);
+                    } else {
+                        console.error("Incomplete data received", data);
+                    }
+                } else {
+                    console.error("Unexpected message type", data.type);
+                }
+            } catch ( error ) {
+                console.error("Error processing message", error);
+            }
+        };
+        
+    </script>        
+</body>
+</html>

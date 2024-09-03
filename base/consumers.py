@@ -85,3 +85,87 @@ class ChatroomConsumer(WebsocketConsumer):
         }
         html = render_to_string("chat/partials/online_count.html", context)
         self.send(text_data=html) 
+
+
+from channels.generic.websocket import WebsocketConsumer
+import json
+from asgiref.sync import async_to_sync
+
+class PongConsumer(WebsocketConsumer):
+    def connect(self):
+        self.room_group_name = 'pong_room'
+
+        # Join room group
+        async_to_sync(self.channel_layer.group_add)(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        self.accept()
+
+        # Initial game state
+        self.game_state = {
+            'paddle1': {'y': 0},
+            'paddle2': {'y': 0},
+            'ball': {'x': 0, 'y': 0},
+            'ball_speed': 0.1,
+            'ball_angle': 180,
+            'score1': 0,
+            'score2': 0,
+        }
+
+        # Send current game state to the newly connected client
+        self.send(text_data=json.dumps({
+            'type': 'state_update',
+            'game_state': self.game_state
+        }))
+
+    def disconnect(self, close_code):
+        # Leave room group
+        async_to_sync(self.channel_layer.group_discard)(
+            self.room_group_name,
+            self.channel_name
+        )
+
+    def receive(self, text_data):
+        data = json.loads(text_data)
+        message_type = data.get('type')
+
+        if message_type == 'move_paddle':
+            player_id = data['player_id']
+            position = data['position']
+
+            # Update the paddle's position
+            if player_id == 1:
+                self.game_state['paddle1']['y'] = position
+            elif player_id == 2:
+                self.game_state['paddle2']['y'] = position
+
+            # Broadcast the new game state
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'send_state_update',
+                    'game_state': self.game_state
+                }
+            )
+
+        elif message_type == 'update_ball':
+            # Additional checks or updates can be handled here
+            self.game_state['ball'] = data['ball']
+            self.check_ball_reset()
+
+    def check_ball_reset(self):
+        # Check if ball crosses the reset line and reset if necessary
+        if abs(self.game_state['ball']['x']) > 2.45:  # Example reset condition
+            self.game_state['ball']['x'] = 0
+            self.game_state['ball']['y'] = 0
+
+    def send_state_update(self, event):
+        game_state = event['game_state']
+
+        # Send updated state to all clients
+        self.send(text_data=json.dumps({
+            'type': 'state_update',
+            'game_state': game_state
+        }))

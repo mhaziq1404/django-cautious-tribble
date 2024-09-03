@@ -14,9 +14,14 @@ import random
 from .models import User, ChatGroup, Room, GroupMessage, Match, Friend, Notification
 from .forms import MyUserCreationForm, ChatmessageCreateForm, RoomForm, UserForm, NewGroupForm, ChatRoomEditForm, MatchScoreForm
 
+from rest_framework_simplejwt.tokens import RefreshToken
+
 # <!-- /*==============================
 # =>  Authentication Functions
 # ================================*/ -->
+
+
+from django.conf import settings
 
 def loginPage(request):
     if request.user.is_authenticated:
@@ -35,9 +40,19 @@ def loginPage(request):
         user = authenticate(request, email=email, password=password)
 
         if user:
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            # Set JWT tokens in cookies
+            response = redirect('home')
+            response.set_cookie('access_token', access_token, httponly=True, secure=settings.SECURE_SSL_REDIRECT)
+            response.set_cookie('refresh_token', refresh_token, httponly=True, secure=settings.SECURE_SSL_REDIRECT)
+            
             login(request, user)
             messages.success(request, 'Logged in successfully.')
-            return redirect('home')
+            return response
         else:
             messages.error(request, 'Invalid email or password.')
 
@@ -45,9 +60,15 @@ def loginPage(request):
 
 
 def logoutUser(request):
+    response = redirect('home')
+    
+    # Clear JWT tokens from cookies
+    response.delete_cookie('access_token')
+    response.delete_cookie('refresh_token')
+
     logout(request)
     messages.success(request, 'Logged out successfully.')
-    return redirect('home')
+    return response
 
 
 def registerPage(request):
@@ -59,13 +80,24 @@ def registerPage(request):
             user = form.save(commit=False)
             user.username = user.username.lower()
             user.save()
+
+            # Automatically log in the user and generate JWT tokens
             login(request, user)
-            messages.success(request, 'Registration successful. You are now logged in.')
-            return redirect('home')
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            # Store tokens in session or handle them as needed
+            request.session['access_token'] = access_token
+            request.session['refresh_token'] = refresh_token
+
+            messages.success(request, 'Registration successful. Please Login.')
+            return redirect('login')
         else:
             messages.error(request, 'An error occurred during registration. Please check the form and try again.')
 
     return render(request, 'base/login_register.html', {'form': form})
+
 
 
 # <!-- /*==============================
@@ -951,3 +983,7 @@ def cancel_friend_request(request, user_id):
     except Friend.DoesNotExist:
         messages.error(request, "Friend request does not exist.")
     return redirect('user-profile', pk=user_id)
+
+
+def pong_game_view(request):
+    return render(request, 'pong/pong_game.html')

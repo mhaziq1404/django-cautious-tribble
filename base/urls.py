@@ -1,9 +1,6 @@
 from django.urls import path
 from . import views
-# from .views import *
-
-from django.urls import path
-from . import views
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     # Authentication
@@ -55,5 +52,9 @@ urlpatterns = [
     # notifications
     path('notifications/read/<int:notification_id>/', views.friend_mark_as_read, name='friend_mark_as_read'),
     path('noti_list/', views.noti_list, name="noti_list"),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    path('test/', views.pong_game_view, name='pong_game'),
 ]
 
