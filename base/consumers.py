@@ -92,80 +92,97 @@ import json
 from asgiref.sync import async_to_sync
 
 class PongConsumer(WebsocketConsumer):
+    players = []  # Track players connected
+    score = {'player1': 0, 'player2': 0}  # Track scores
+    game_active = True  # Track whether the game is active or over
+    user = None  # Store user info
+    room_no = 0  # Store room number
+    room = None  # Store room object
+
     def connect(self):
-        self.room_group_name = 'pong_room'
+        # Initialize user and room
+        self.user = self.scope['user']
+        self.room_no = self.scope['url_route']['kwargs']['room_no']
+        self.room = get_object_or_404(Room, id=self.room_no)
 
-        # Join room group
-        async_to_sync(self.channel_layer.group_add)(
-            self.room_group_name,
-            self.channel_name
-        )
+        # Add player to the game
+        if len(self.players) < 2:
+            self.players.append(self)
+            self.accept()
 
-        self.accept()
+            # Assign player number
+            if len(self.players) == 1:
+                self.player = 1
+            else:
+                self.player = 2
 
-        # Initial game state
-        self.game_state = {
+            # Start game when both players are connected
+            if len(self.players) == 2:
+                self.start_game()
+        else:
+            self.close()
+
+    def disconnect(self, close_code):
+        if self in self.players:
+            self.players.remove(self)
+
+    def receive(self, text_data):
+        if not self.game_active:  # Ignore messages if the game is over
+            return
+
+        data = json.loads(text_data)
+
+        # Check if ball reset event and update scores
+        if 'reset' in data:
+            if data['reset'] == 'player1':
+                self.score['player1'] += 1
+            elif data['reset'] == 'player2':
+                self.score['player2'] += 1
+
+            # Check if either player has reached the points limit
+            if self.score['player1'] >= self.room.points or self.score['player2'] >= self.room.points:
+                self.end_game()
+
+            # Broadcast score update to all players
+            score_update = {
+                'type': 'score_update',
+                'player1_score': self.score['player1'],
+                'player2_score': self.score['player2']
+            }
+            for player in self.players:
+                player.send(text_data=json.dumps(score_update))
+
+        # Broadcast the received data to both players
+        for player in self.players:
+            player.send(text_data=json.dumps(data))
+
+    def start_game(self):
+        # Send initial state to both players
+        initial_state = {
             'paddle1': {'y': 0},
             'paddle2': {'y': 0},
             'ball': {'x': 0, 'y': 0},
-            'ball_speed': 0.1,
-            'ball_angle': 180,
-            'score1': 0,
-            'score2': 0,
+            'score': self.score
         }
+        for player in self.players:
+            player.send(text_data=json.dumps({'type': 'state_update', **initial_state}))
 
-        # Send current game state to the newly connected client
-        self.send(text_data=json.dumps({
-            'type': 'state_update',
-            'game_state': self.game_state
-        }))
+    def end_game(self):
+        # Mark game as inactive
+        self.game_active = False
 
-    def disconnect(self, close_code):
-        # Leave room group
-        async_to_sync(self.channel_layer.group_discard)(
-            self.room_group_name,
-            self.channel_name
-        )
+        # Determine the winner
+        winner = 'player1' if self.score['player1'] >= self.room.points else 'player2'
 
-    def receive(self, text_data):
-        data = json.loads(text_data)
-        message_type = data.get('type')
+        self.room.is_expired = True
+        self.room.save()
 
-        if message_type == 'move_paddle':
-            player_id = data['player_id']
-            position = data['position']
-
-            # Update the paddle's position
-            if player_id == 1:
-                self.game_state['paddle1']['y'] = position
-            elif player_id == 2:
-                self.game_state['paddle2']['y'] = position
-
-            # Broadcast the new game state
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    'type': 'send_state_update',
-                    'game_state': self.game_state
-                }
-            )
-
-        elif message_type == 'update_ball':
-            # Additional checks or updates can be handled here
-            self.game_state['ball'] = data['ball']
-            self.check_ball_reset()
-
-    def check_ball_reset(self):
-        # Check if ball crosses the reset line and reset if necessary
-        if abs(self.game_state['ball']['x']) > 2.45:  # Example reset condition
-            self.game_state['ball']['x'] = 0
-            self.game_state['ball']['y'] = 0
-
-    def send_state_update(self, event):
-        game_state = event['game_state']
-
-        # Send updated state to all clients
-        self.send(text_data=json.dumps({
-            'type': 'state_update',
-            'game_state': game_state
-        }))
+        # Broadcast game-over message to all players
+        game_over_message = {
+            'type': 'game_over',
+            'winner': winner,
+            'player1_score': self.score['player1'],
+            'player2_score': self.score['player2']
+        }
+        for player in self.players:
+            player.send(text_data=json.dumps(game_over_message))

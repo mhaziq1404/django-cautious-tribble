@@ -33,7 +33,6 @@
             color: #fff; /* White text color */
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Subtle shadow for depth */
             font-family: 'Orbitron', sans-serif; /* Custom font */
-            width: fit-content;
         }
         #player1-score, #player2-score {
             font-weight: bold;
@@ -67,8 +66,8 @@
 </head>
 <body>
     <div id="scoreboard">
-        <div id="player1-score">{{room.host.username}}: 0</div>
-        <div id="player2-score">Rival: 0</div>
+        <div id="player1-score">Player 1: 0</div>
+        <div id="player2-score">Player 2: 0</div>
     </div>
     <div id="game-over-message">Game Over! Winner: <span id="winner"></span></div>
     
@@ -141,16 +140,17 @@
         }
 
         function animate() {
-            if (gameOver) return;
+            if (gameOver) return; // Stop animation if game is over
             requestAnimationFrame(animate);
 
+            // Check if the ball crosses the reset line
             if (Math.abs(ball.position.x) >= resetLineXPosition) {
 
-            let reset;
+            let reset;  // Use 'let' to declare the variable
             if (ball.position.x >= resetLineXPosition) {
-                reset = 'player1';
+                reset = 'player1';  // Right side reset, so player1 scores
             } else {
-                reset = 'player2';
+                reset = 'player2';  // Left side reset, so player2 scores
             }
 
             // Reset ball position and speed
@@ -201,9 +201,10 @@
                 ball.position.y - ballRadius <= paddle2.position.y + paddleHeight / 2 &&
                 ball.position.y + ballRadius >= paddle2.position.y - paddleHeight / 2) {
                 
+                // Reverse direction and move ball slightly away from paddle2
                 ball_angle = Math.PI - ball_angle + get_random_angle(-Math.PI / 4, Math.PI / 4);
-                ball.position.x = paddle2.position.x - paddleWidth / 2 - ballRadius - 0.01;
-                ball_speed += 0.01;
+                ball.position.x = paddle2.position.x - paddleWidth / 2 - ballRadius - 0.01;  // Shift the ball away
+                ball_speed += 0.01;  // Optionally increase the ball speed slightly
                 const currentTime = Date.now();
                 if (currentTime - lastSendTime > debounceTime) {
                     const gameState = {
@@ -218,6 +219,7 @@
                 }
             }
 
+            // Ball wall collision
             if (ball.position.y + ballRadius >= 3 || ball.position.y - ballRadius <= -3) {
                 ball_angle = 2 * Math.PI - ball_angle;
                 const currentTime = Date.now();
@@ -279,8 +281,8 @@
         });
 
         function updateScoreboard() {
-            document.getElementById('player1-score').textContent = "{{room.host.username}}: " + player1Score;
-            document.getElementById('player2-score').textContent = "Rival: " + player2Score;
+            document.getElementById('player1-score').textContent = "Player 1: " + player1Score;
+            document.getElementById('player2-score').textContent = "Player 2: " + player2Score;
         }
 
         socket.onmessage = function(e) {
@@ -288,11 +290,13 @@
                 const data = JSON.parse(e.data);
 
                 if (data.type === 'score_update') {
+                    // Update the scores based on the message from the server
                     player1Score = data.player1_score;
                     player2Score = data.player2_score;
                     updateScoreboard();
                 } else if (data.type === 'state_update') {
                     if (data.paddle1 && data.paddle2 && data.ball && 'ball_angle' in data) {
+                        // Safely update positions based on received data
                         paddle1.position.y = data.paddle1.y;
                         paddle2.position.y = data.paddle2.y;
                         ball.position.x = data.ball.x;
@@ -314,5 +318,3 @@
     </script>          
 </body>
 </html>
-
-

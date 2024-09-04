@@ -377,14 +377,44 @@ def join_room(request):
     return redirect('home')
 
 
+# @login_required(login_url='login')
+# def pongPage(request, pk):
+#     room = get_object_or_404(Room, id=pk)
+
+#     if request.method == 'POST':
+#         winner = request.POST.get('winner')
+#         if winner:
+#             if room.opponent_type in ['AI', 'vs Player', 'Tournament']:
+#                 room.won_by_user = request.user if winner != 'AI' else None
+#                 room.won_by_ai = winner == 'AI'
+#                 room.is_expired = True
+#                 room.save()
+#                 return JsonResponse({'status': 'success'})
+#         return JsonResponse({'status': 'failed', 'error': 'No winner specified'})
+
+#     return render(request, 'base/pong_ai.html', {'room': room})
+
+
 @login_required(login_url='login')
 def pongPage(request, pk):
     room = get_object_or_404(Room, id=pk)
+    webs_name = room.id
 
     if request.method == 'POST':
         winner = request.POST.get('winner')
         if winner:
-            if room.opponent_type in ['AI', 'vs Player', 'Tournament']:
+            if room.opponent_type == 'AI':
+                room.won_by_user = request.user if winner != 'AI' else None
+                room.won_by_ai = winner == 'AI'
+                room.is_expired = True
+                room.save()
+                return JsonResponse({'status': 'success'})
+            if room.opponent_type == 'vs Player':
+                room.won_by_user = request.user if winner != 'AI' else None
+                room.is_expired = True
+                room.save()
+                return JsonResponse({'status': 'success'})
+            if room.opponent_type == 'Tournament':
                 room.won_by_user = request.user if winner != 'AI' else None
                 room.won_by_ai = winner == 'AI'
                 room.is_expired = True
@@ -392,7 +422,7 @@ def pongPage(request, pk):
                 return JsonResponse({'status': 'success'})
         return JsonResponse({'status': 'failed', 'error': 'No winner specified'})
 
-    return render(request, 'base/pong_ai.html', {'room': room})
+    return render(request, 'pong/pong_game.html', {'room': room, 'webs_name': webs_name})
 
 # <!-- /*==============================
 # =>  User Profile Functions
