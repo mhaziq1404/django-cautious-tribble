@@ -194,7 +194,7 @@ def leave_room(request):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
-def check_kickout_status(request):
+def check_status(request):
     room_id = request.GET.get('room_id')
     player_id = request.GET.get('player_id')
 
@@ -203,12 +203,18 @@ def check_kickout_status(request):
         player = get_object_or_404(User, id=player_id)
         if player not in room.participants.all():
             return JsonResponse({'status': 'kickedout'})
+        if room.is_started == True:
+            return JsonResponse({'status': 'started'})
     return JsonResponse({'status': 'still_in_room'})
 
 
 @login_required(login_url='login')
 def room(request, pk):
     room = get_object_or_404(Room, id=pk)
+
+    if(room.is_expired == True):
+        messages.error(request, 'Room already expired.')
+        return redirect('home')
     
     if room.opponent_type == "AI":
         return render(request, 'base/room.html', {'room': room})
@@ -257,7 +263,6 @@ def room(request, pk):
                 room.participants.remove(request.user)
                 return redirect('home')
             else:
-                # Handle user not being part of the room
                 messages.error(request, "You are not a participant of this room.")
 
         elif action == 'ready':
@@ -285,18 +290,16 @@ def createRoom(request):
             room.save()
             
             unique_suffix = uuid4().hex[:6]
-            
-            # Replace spaces with hyphens
+
             formatted_name = room.name.replace(' ', '-')
 
             chat_group = ChatGroup.objects.create(
                 admin=request.user,
-                group_name=f"{formatted_name}-{unique_suffix}",  # Append unique suffix
-                groupchat_name=f"{formatted_name}-{unique_suffix}",  # Append unique suffix
+                group_name=f"{formatted_name}-{unique_suffix}",
+                groupchat_name=f"{formatted_name}-{unique_suffix}",
                 room=room
             )
 
-            # Assign the user to the group after saving
             chat_group.members.set([request.user])
 
             if request.htmx:
@@ -343,23 +346,19 @@ def deleteRoom(request, pk):
 
 @login_required(login_url='login')
 def ai_playnow(request):
-    # Create a new room with the current user and AI as opponents
     room = Room.objects.create(
         host=request.user,
-        opponent_type="AI",  # Set opponent type to AI
+        opponent_type="AI",
         name="vsAIGame",
         description="vsAIGame",
-        is_2player=True,  # Assume it's a 2-player match (user vs AI)
+        is_2player=True,
         points=11
     )
-    
-    # Automatically add the current user as a participant
+
     room.participants.add(request.user)
     
-    # Save the room instance
     room.save()
     
-    # Redirect the user to the room page
     return redirect('room', pk=room.id)
 
 
@@ -367,11 +366,9 @@ def ai_playnow(request):
 def join_room(request):
     if request.method == "POST":
         invitation_link = request.POST.get('invitation_link')
-        print(invitation_link)
-        # Logic to process the invitation link and retrieve the room
         room = get_object_or_404(Room, invitation_link=invitation_link)
         room.participants.add(request.user)
-        messages.success(request, 'Joining the Room')
+        messages.success(request, 'Room Found. Joining the Room')
         return redirect('room', pk=room.id)
     messages.warning(request, 'Room not Found')
     return redirect('home')
@@ -684,21 +681,19 @@ def invite_through_message(request):
 
 @login_required(login_url='login')
 def chat_ui(request):
-    # Fetch all chat groups for the current user
     all_chat_groups = request.user.group_chats.all()
     
-    # Get the 'view' parameter from the URL to determine which view to show
     view = request.GET.get('view', 'all')
 
     if view == 'blocked':
-        # Fetch blocked groups
         chat_groups = request.user.blocked_groups.all()
     else:
-        # Fetch public and private chat groups
         chat_groups = all_chat_groups.filter(is_private=False) | all_chat_groups.filter(is_private=True)
 
-    public_chat_groups = all_chat_groups.filter(is_private=False)
-    private_chat_groups = all_chat_groups.filter(is_private=True)
+    blocked_chat_groups = request.user.blocked_groups.all()
+
+    public_chat_groups = all_chat_groups.filter(is_private=False) 
+    private_chat_groups = all_chat_groups.filter(is_private=True).exclude(id__in=blocked_chat_groups.values_list('id', flat=True))
     
     context = {
         'chat_groups': chat_groups,
@@ -715,10 +710,12 @@ def chat_group_detail(request, id):
     group = get_object_or_404(ChatGroup, id=id)
     all_chat_groups = request.user.group_chats.all()
     
+    blocked_chat_groups = request.user.blocked_groups.all()
     public_chat_groups = all_chat_groups.filter(is_private=False) 
     private_chat_groups = all_chat_groups.filter(is_private=True)
 
     chat_messages = group.chat_messages.all()[:30]
+    view = request.GET.get('view', 'all')
 
     if request.htmx:
         form = ChatmessageCreateForm(request.POST)
@@ -737,6 +734,7 @@ def chat_group_detail(request, id):
         'selected_group_id': group.id,
         'chatroom_name_ws': group.groupchat_name,
         'chat_messages': chat_messages,
+        'current_view': view
     }
     
     return render(request, 'base/private_messages.html', context)
@@ -756,6 +754,19 @@ def block_group(request, pk):
     return redirect('messages')
 
 
+@login_required(login_url='login')
+def unblock_group(request, pk):
+    group_to_unblock = get_object_or_404(ChatGroup, group_name=pk)
+
+    if request.user.blocked_groups.filter(id=group_to_unblock.id).exists():
+        request.user.blocked_groups.remove(group_to_unblock)
+        messages.success(request, f"You have successfully unblocked the chat group {group_to_unblock.group_name}.")
+    else:
+        messages.info(request, "This chat group is not currently blocked.")
+
+    return redirect('messages')
+
+
 # <!-- /*==============================
 # =>  Tournament Functions
 # ================================*/ -->
@@ -764,6 +775,8 @@ def block_group(request, pk):
 @login_required(login_url='login')
 def tournament_view(request, pk):
     room = Room.objects.get(id=pk)  # Fetch the room object
+    room.is_started = True
+    room.save()
     participants = list(room.participants.all())
     random.shuffle(participants)
     opp_count = len(participants)

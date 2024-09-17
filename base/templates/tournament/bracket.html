@@ -114,7 +114,7 @@
   // JavaScript Countdown Timer
   let countdown = 10;
   const countdownElement = document.getElementById('countdown');
-  const redirectUrl = "{% url 'pong' room.id %}"; // Replace 'next_url' with the name of your URL pattern
+  const redirectUrl = "{% url 'pong' room.id %}";
 
   const countdownInterval = setInterval(() => {
     countdownElement.style.setProperty('--value', countdown);

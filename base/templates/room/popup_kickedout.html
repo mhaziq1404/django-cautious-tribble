@@ -22,11 +22,15 @@
     }
 
     function checkKickoutStatus() {
-        fetch('{% url "check_kickout_status" %}?room_id={{ room.id }}&player_id={{ request.user.id }}')
+        fetch('{% url "check_status" %}?room_id={{ room.id }}&player_id={{ request.user.id }}')
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'kickedout') {
                     showPopupAndRedirect();
+                }
+                if (data.status === 'started') {
+                    const redirectUrl = "{% url 'tournament_view' room.id %}";
+                    window.location.href = redirectUrl;
                 }
             })
             .catch(error => {

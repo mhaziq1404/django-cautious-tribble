@@ -24,7 +24,7 @@ urlpatterns = [
     path('player-list/<int:room_id>/', views.player_list, name='player_list'),
     path('leave-room/', views.leave_room, name='leave_room'),
     path('kick-player/', views.kick_player, name='kick_player'),
-    path('check-kickout-status/', views.check_kickout_status, name='check_kickout_status'),
+    path('check-status/', views.check_status, name='check_status'),
 
     # Chat Functionality
     path('pong/<str:pk>/', views.pongPage, name="pong"),
@@ -39,6 +39,7 @@ urlpatterns = [
     path('messages/create_privchat/<str:user_id>/', views.create_privatechat, name='create_privatechat'),
     path('invite/', views.invite_through_message, name='invite_through_message'),
     path('block/<str:pk>/', views.block_group, name='block_group'),
+    path('unblock/<str:pk>/', views.unblock_group, name='unblock_group'),
 
     # tournament
     path('room/tournament/<str:pk>/', views.tournament_view, name='tournament_view'),

@@ -90,6 +90,7 @@ class Room(models.Model):
     host_ready = models.BooleanField(default=False)
     opp_ready = models.BooleanField(default=False)
     is_2player = models.BooleanField(default=False)
+    is_started = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-updated', '-created']
