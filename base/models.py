@@ -73,6 +73,7 @@ class Room(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     participants = models.ManyToManyField(User, related_name='participants', blank=True)
+    participants_shuffled = models.ManyToManyField(User, related_name='participants_shuffled', blank=True)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     points = models.IntegerField(default=1)
@@ -91,6 +92,7 @@ class Room(models.Model):
     opp_ready = models.BooleanField(default=False)
     is_2player = models.BooleanField(default=False)
     is_started = models.BooleanField(default=False)
+    matches = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ['-updated', '-created']

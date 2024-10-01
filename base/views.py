@@ -62,7 +62,6 @@ def loginPage(request):
 def logoutUser(request):
     response = redirect('home')
     
-    # Clear JWT tokens from cookies
     response.delete_cookie('access_token')
     response.delete_cookie('refresh_token')
 
@@ -81,13 +80,11 @@ def registerPage(request):
             user.username = user.username.lower()
             user.save()
 
-            # Automatically log in the user and generate JWT tokens
             login(request, user)
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)
 
-            # Store tokens in session or handle them as needed
             request.session['access_token'] = access_token
             request.session['refresh_token'] = refresh_token
 
@@ -306,7 +303,9 @@ def createRoom(request):
                 rooms = Room.objects.filter(is_expired=False)
                 return render(request, 'room/room_list.html', {'rooms': rooms})
             else:
+                messages.success(request, 'Room Created successfully.')
                 return redirect('home')
+        messages.error(request, 'Cannot create Room')
     else:
         form = RoomForm()
 
@@ -393,25 +392,15 @@ def join_room(request):
 
 
 @login_required(login_url='login')
-def pongPage(request, pk):
+def pongPageTournament(request, pk, split_no):
     room = get_object_or_404(Room, id=pk)
     webs_name = room.id
 
     if request.method == 'POST':
         winner = request.POST.get('winner')
         if winner:
-            if room.opponent_type == 'AI':
-                room.won_by_user = request.user if winner != 'AI' else None
-                room.won_by_ai = winner == 'AI'
-                room.is_expired = True
-                room.save()
-                return JsonResponse({'status': 'success'})
-            if room.opponent_type == 'vs Player':
-                room.won_by_user = request.user if winner != 'AI' else None
-                room.is_expired = True
-                room.save()
-                return JsonResponse({'status': 'success'})
-            if room.opponent_type == 'Tournament':
+            # General handling for AI and Player match types
+            if room.opponent_type in ['AI', 'vs Player', 'Tournament']:
                 room.won_by_user = request.user if winner != 'AI' else None
                 room.won_by_ai = winner == 'AI'
                 room.is_expired = True
@@ -419,7 +408,69 @@ def pongPage(request, pk):
                 return JsonResponse({'status': 'success'})
         return JsonResponse({'status': 'failed', 'error': 'No winner specified'})
 
-    return render(request, 'pong/pong_game.html', {'room': room, 'webs_name': webs_name})
+    # Only handle 'Tournament' opponent type
+    if room.opponent_type == 'Tournament':
+        matches = room.matches.get('semifinals', [])  # Access semifinal matches from JSON
+        split_no = 1
+        
+        for match in matches:
+            try:
+                player1 = User.objects.get(username=match['player1'])
+                player2 = User.objects.get(username=match['player2'])
+            except User.DoesNotExist:
+                continue
+
+            if request.user == player1 or request.user == player2:
+                return render(request, 'pong/pong_game.html', {
+                    'room': room,
+                    'player1': player1.username,
+                    'player2': player2.username,
+                    'webs_name': webs_name, 
+                    'split_no': split_no
+                })
+            split_no += 1
+
+    return render(request, 'pong/pong_game.html', {
+        'room': room,
+        'webs_name': webs_name,
+        'split_no': split_no
+    })
+
+
+
+@login_required(login_url='login')
+def pongPage(request, pk):
+    room = get_object_or_404(Room, id=pk)
+    webs_name = room.id
+
+    if request.method == 'POST':
+        winner = request.POST.get('winner')
+        if winner:
+            if winner == 'AI':
+                room.won_by_ai = True
+                room.won_by_user = None
+            else:
+                room.won_by_user = request.user
+                room.won_by_ai = False
+
+            room.is_expired = True
+            room.save()
+
+            return JsonResponse({'status': 'success'})
+        else:
+            return JsonResponse({'status': 'failed', 'error': 'No winner specified'})
+
+    player2 = room.participants.exclude(id=room.host.id).first()
+
+    context = {
+        'room': room,
+        'webs_name': webs_name,
+        'player1': room.host.username,
+        'player2': player2.username if player2 else 'AI',
+    }
+
+    return render(request, 'pong/pong_game_player.html', context)
+
 
 # <!-- /*==============================
 # =>  User Profile Functions
@@ -430,26 +481,22 @@ def pongPage(request, pk):
 def userProfile(request, pk):
     user = get_object_or_404(User, id=pk)
     
-    # Check if the users are already friends (confirmed=True)
     is_friend = Friend.objects.filter(
         Q(user=request.user, friend=user, confirmed=True) |
         Q(user=user, friend=request.user, confirmed=True)
     ).exists()
     
-    # Check if a friend request has been sent but not yet confirmed
     friend_request_sent = Friend.objects.filter(user=request.user, friend=user, confirmed=False).exists()
     
-    # Check if both users have sent friend requests to each other but not yet confirmed
     mutual_requests = Friend.objects.filter(
         (Q(user=request.user, friend=user) & Q(confirmed=False)) |
         (Q(user=user, friend=request.user) & Q(confirmed=False))
     )
     
-    # If there are mutual requests and they haven't been confirmed yet, confirm the friendship
     if mutual_requests.count() == 2:
         mutual_requests.update(confirmed=True)
-        is_friend = True  # Update is_friend to reflect the confirmed status
-        friend_request_sent = False  # No longer needed as the friendship is confirmed
+        is_friend = True
+        friend_request_sent = False
     
     rooms = user.room_set.all()
     
@@ -654,7 +701,6 @@ def send_invitation_message(sender, recipient, room):
         event = {'type': 'message_handler', 'message_id': message.id}
         async_to_sync(channel_layer.group_send)(group.group_name, event)
     else:
-        # Handle the case where no appropriate group is found
         raise ValueError("No suitable group found for sending the invitation")
 
 
@@ -772,13 +818,112 @@ def unblock_group(request, pk):
 # ================================*/ -->
 
 
+# @login_required(login_url='login')
+# def tournament_view(request, pk):
+#     room = get_object_or_404(Room, id=pk)
+#     room.is_started = True
+#     room.save()
+
+#     if request.user == room.host:
+#         participants = list(room.participants.all())
+#         random.shuffle(participants)
+#         room.participants_shuffled.set(participants)
+#         room.save()
+#     else:
+#         participants = list(room.participants_shuffled.all())
+
+#     opp_count = len(participants)
+
+#     matches = {
+#         'quarterfinals': [],
+#         'semifinals': [],
+#         'final': None
+#     }
+
+#     matches_dup = {
+#         'quarterfinals': [],
+#         'semifinals': [],
+#         'final': None
+#     }
+
+#     split_no = 1
+
+#     if opp_count == 4:
+#         for i in range(0, 4, 2):
+#             match = Match(
+#                 player1=participants[i],
+#                 player2=participants[i + 1],
+#                 round='Semifinal'
+#             )
+#             match.save()
+
+#             match_data = {
+#                 'player1': participants[i],
+#                 'player2': participants[i + 1],
+#                 'round': match.round,
+#                 'id': match.id
+#             }
+#             matches['semifinals'].append(match_data)
+#             matches_dup['semifinals'].append(match)
+
+#         final_match = {
+#             'round': 'Final',
+#             'is_final': True,
+#             'player1': None,
+#             'player2': None,
+#             'id': None
+#         }
+#         matches['final'] = final_match
+#         matches_dup['final'] = final_match.copy()
+
+#     for match_round in ['semifinals']:
+#         for match in matches[match_round]:
+
+#             player1 = match['player1']
+#             player2 = match['player2']
+
+#             if request.user == player1 or request.user == player2:
+#                 context = {
+#                     'matches': matches,
+#                     'matches_dup': matches_dup,
+#                     'opp_count': opp_count,
+#                     'room': room,
+#                     'split_no': split_no,
+#                 }
+#                 room.matches = matches
+#                 room.save()
+#                 return render(request, 'tournament/bracket.html', context)
+
+#             split_no += 1
+
+#     context = {
+#         'matches': matches,
+#         'matches_dup': matches_dup,
+#         'opp_count': opp_count,
+#         'room': room,
+#         'split_no': split_no,
+#     }
+
+#     room.matches = matches
+#     room.save()
+
+#     return render(request, 'tournament/bracket.html', context)
+
+
 @login_required(login_url='login')
 def tournament_view(request, pk):
-    room = Room.objects.get(id=pk)  # Fetch the room object
+    room = get_object_or_404(Room, id=pk)
     room.is_started = True
     room.save()
-    participants = list(room.participants.all())
-    random.shuffle(participants)
+
+    if request.user == room.host and not room.participants_shuffled.exists():
+        participants = list(room.participants.all())
+        random.shuffle(participants)
+        room.participants_shuffled.set(participants)
+        room.save()
+    else:
+        participants = list(room.participants_shuffled.all())
+
     opp_count = len(participants)
 
     matches = {
@@ -787,57 +932,74 @@ def tournament_view(request, pk):
         'final': None
     }
 
-    if opp_count == 8:
-        # Create Quarterfinals
-        for i in range(0, 8, 2):
-            match = Match(
-                player1=participants[i],
-                player2=participants[i+1],
-                round='Quarterfinal'
-            )
-            match.save()
-            matches['quarterfinals'].append(match)
+    matches_dup = {
+        'quarterfinals': [],
+        'semifinals': [],
+        'final': None
+    }
 
-        # Create Semifinals
-        for _ in range(4):
-            match = Match(round='Semifinal')
-            match.save()
-            matches['semifinals'].append(match)
+    split_no = 1
 
-        # Create Final with empty player1 and player2
-        final_match = Match(
-            round='Final',
-            is_final=True
-            # Do not set player1 and player2 yet
-        )
-        final_match.save()
-        matches['final'] = final_match
-
-    elif opp_count == 4:
-        # Create Semifinals
+    if opp_count == 4:
         for i in range(0, 4, 2):
             match = Match(
                 player1=participants[i],
-                player2=participants[i+1],
+                player2=participants[i + 1],
                 round='Semifinal'
             )
             match.save()
-            matches['semifinals'].append(match)
 
-        # Create Final with empty player1 and player2
-        final_match = Match(
-            round='Final',
-            is_final=True
-            # Do not set player1 and player2 yet
-        )
-        # final_match.save()
+            match_data = {
+                'player1': match.player1.username,
+                'player2': match.player2.username,
+                'round': match.round,
+                'id': match.id
+            }
+            matches['semifinals'].append(match_data)
+            matches_dup['semifinals'].append(match)
+
+        final_match = {
+            'round': 'Final',
+            'is_final': True,
+            'player1': None,
+            'player2': None,
+            'id': None
+        }
+
         matches['final'] = final_match
+        matches_dup['final'] = final_match.copy()
+
+    for match_round in ['semifinals']:
+        for match in matches[match_round]:
+            try:
+                player1 = User.objects.get(username=match['player1'])
+                player2 = User.objects.get(username=match['player2'])
+            except User.DoesNotExist:
+                continue
+
+            if request.user == player1 or request.user == player2:
+                context = {
+                    'matches': matches,
+                    'matches_dup': matches_dup,
+                    'opp_count': opp_count,
+                    'room': room,
+                    'split_no': split_no,
+                }
+                room.matches = matches
+                room.save()
+                return render(request, 'tournament/bracket.html', context)
+
+            split_no += 1
 
     context = {
         'matches': matches,
+        'matches_dup': matches_dup,
         'opp_count': opp_count,
         'room': room,
     }
+
+    room.matches = matches
+    room.save()
 
     return render(request, 'tournament/bracket.html', context)
 

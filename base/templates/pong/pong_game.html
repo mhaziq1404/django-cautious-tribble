@@ -23,33 +23,26 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 4vw; /* Responsive font size */
+            font-size: 4vw;
             display: flex;
             justify-content: space-between;
-            width: 60vw; /* Responsive width */
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-            padding: 10px 20px;
-            border-radius: 10px; /* Rounded corners */
-            color: #fff; /* White text color */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Subtle shadow for depth */
-            font-family: 'Orbitron', sans-serif; /* Custom font */
             width: fit-content;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            font-family: 'Orbitron', sans-serif;
         }
         #player1-score, #player2-score {
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Text shadow for readability */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
             animation: score-update 0.3s ease-in-out;
         }
         @keyframes score-update {
             0% { transform: scale(1); }
             50% { transform: scale(1.2); }
             100% { transform: scale(1); }
-        }
-        @media (min-width: 768px) {
-            #scoreboard {
-                font-size: 28px;
-                width: 300px;
-            }
         }
         #game-over-message {
             position: absolute;
@@ -67,31 +60,76 @@
 </head>
 <body>
     <div id="scoreboard">
-        <div id="player1-score">{{room.host.username}}: 0</div>
-        <div id="player2-score">Rival: 0</div>
+        <div id="player1-score">{{ player1 }}: 0</div>
+        <div id="player2-score">{{ player2 }}: 0</div>
     </div>
     <div id="game-over-message">Game Over! Winner: <span id="winner"></span></div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const socket = new WebSocket('ws://' + window.location.host + '/ws/pong/{{webs_name}}');
-        socket.onerror = function(error) {
-            console.error('WebSocket error:', error);
-        };
-        socket.onopen = function() {
-            console.log('WebSocket connection established');
-        };
-        socket.onclose = function(e) {
-            console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
-            setTimeout(function() {
-                socket = new WebSocket('ws://' + window.location.host + '/ws/pong/{{webs_name}}');
-            }, 1000);
-        };
-        
+        let socket;
+        let player1Score = 0;
+        let player2Score = 0;
+        let gameOver = false;
+        const debounceTime = 100;
+        let lastSendTime = 0;
+
+        function connectSocket() {
+            socket = new WebSocket(`ws://${window.location.host}/ws/pong/{{webs_name}}/{{split_no}}`);
+            console.log('this is split : /ws/pong/{{webs_name}}/{{split_no}}');
+            
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+            socket.onopen = function() {
+                console.log('WebSocket connection established');
+            };
+            socket.onclose = function(e) {
+                console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
+                setTimeout(function() {
+                    connectSocket();
+                }, 1000);
+            };
+            
+            socket.onmessage = handleSocketMessage;
+        }
+
+        function handleSocketMessage(e) {
+            const data = JSON.parse(e.data);
+
+            if (data.type === 'score_update') {
+                player1Score = data.player1_score;
+                player2Score = data.player2_score;
+                updateScoreboard();
+            } else if (data.type === 'state_update') {
+                updateGameState(data);
+            } else if (data.type === 'game_over') {
+                gameOver = true;
+                document.getElementById('game-over-message').style.display = 'block';
+                document.getElementById('winner').textContent = data.winner;
+            } else {
+                console.error("Unexpected message type", data.type);
+            }
+        }
+
+        function updateScoreboard() {
+            document.getElementById('player1-score').textContent = `{{ player1 }}: ` + player1Score;
+            document.getElementById('player2-score').textContent = `{{ player2 }}: ` + player2Score;
+        }
+
+        function updateGameState(data) {
+            paddle1.position.y = data.paddle1.y;
+            paddle2.position.y = data.paddle2.y;
+            ball.position.x = data.ball.x;
+            ball.position.y = data.ball.y;
+            ball_angle = data.ball_angle;
+        }
+
+        connectSocket();
+
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setClearColor(0x000000);
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
@@ -99,8 +137,6 @@
         const paddleHeight = 2;
         const paddleDepth = 0.5;
         const ballRadius = 0.3;
-        let lastSendTime = 0;
-        const debounceTime = 100;
 
         const paddleGeometry = new THREE.BoxGeometry(paddleWidth, paddleHeight, paddleDepth);
         const paddleMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -111,15 +147,14 @@
         scene.add(paddle1);
         scene.add(paddle2);
 
-        // Add top and bottom walls
         const wallGeometry = new THREE.BoxGeometry(15, 0.2, 0.5);
         const wallMaterial = new THREE.MeshBasicMaterial({ color: 0x808080 });
         const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-        wall.position.set(0, 3, 0);  // Top wall
+        wall.position.set(0, 3, 0);
         scene.add(wall);
 
         const wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
-        wall2.position.set(0, -3, 0);  // Bottom wall
+        wall2.position.set(0, -3, 0);
         scene.add(wall2);
 
         const resetLineXPosition = 8.5;
@@ -134,7 +169,6 @@
 
         let ball_speed = 0.1;
         let ball_angle = Math.PI;
-        let gameOver = false; // To track game over state
 
         function get_random_angle(min, max) {
             return Math.random() * (max - min) + min;
@@ -145,43 +179,40 @@
             requestAnimationFrame(animate);
 
             if (Math.abs(ball.position.x) >= resetLineXPosition) {
+                let reset;
+                if (ball.position.x >= resetLineXPosition) {
+                    reset = 'player1';
+                } else {
+                    reset = 'player2';
+                }
 
-            let reset;
-            if (ball.position.x >= resetLineXPosition) {
-                reset = 'player1';
-            } else {
-                reset = 'player2';
-            }
+                ball.position.set(0, 0, 0);
+                ball_speed = 0.1;
+                ball_angle = Math.PI;
 
-            // Reset ball position and speed
-            ball.position.set(0, 0, 0);
-            ball_speed = 0.1;
-            ball_angle = Math.PI;
-
-            const gameState = {
-                paddle1: { y: paddle1.position.y },
-                paddle2: { y: paddle2.position.y },
-                ball: { x: ball.position.x, y: ball.position.y },
-                ball_angle: ball_angle,
-                reset: reset,
-                type: 'state_update'
-            };
-            socket.send(JSON.stringify(gameState));
+                const gameState = {
+                    paddle1: { y: paddle1.position.y },
+                    paddle2: { y: paddle2.position.y },
+                    ball: { x: ball.position.x, y: ball.position.y },
+                    ball_angle: ball_angle,
+                    reset: reset,
+                    type: 'state_update'
+                };
+                socket.send(JSON.stringify(gameState));
             }
 
             ball.position.x += ball_speed * Math.cos(ball_angle);
             ball.position.y += ball_speed * Math.sin(ball_angle);
 
-            // Ball paddle collision
             if (ball.position.x - ballRadius <= paddle1.position.x + paddleWidth / 2 &&
                 ball.position.x + ballRadius >= paddle1.position.x - paddleWidth / 2 &&
                 ball.position.y - ballRadius <= paddle1.position.y + paddleHeight / 2 &&
                 ball.position.y + ballRadius >= paddle1.position.y - paddleHeight / 2) {
                 
-                // Reverse direction and move ball slightly away from paddle1
                 ball_angle = Math.PI - ball_angle + get_random_angle(-Math.PI / 4, Math.PI / 4);
-                ball.position.x = paddle1.position.x + paddleWidth / 2 + ballRadius + 0.01;  // Shift the ball away
-                ball_speed += 0.01;  // Optionally increase the ball speed slightly
+                ball.position.x = paddle1.position.x + paddleWidth / 2 + ballRadius + 0.01;
+                ball_speed += 0.01;
+
                 const currentTime = Date.now();
                 if (currentTime - lastSendTime > debounceTime) {
                     const gameState = {
@@ -204,6 +235,7 @@
                 ball_angle = Math.PI - ball_angle + get_random_angle(-Math.PI / 4, Math.PI / 4);
                 ball.position.x = paddle2.position.x - paddleWidth / 2 - ballRadius - 0.01;
                 ball_speed += 0.01;
+
                 const currentTime = Date.now();
                 if (currentTime - lastSendTime > debounceTime) {
                     const gameState = {
@@ -220,6 +252,7 @@
 
             if (ball.position.y + ballRadius >= 3 || ball.position.y - ballRadius <= -3) {
                 ball_angle = 2 * Math.PI - ball_angle;
+
                 const currentTime = Date.now();
                 if (currentTime - lastSendTime > debounceTime) {
                     const gameState = {
@@ -236,30 +269,29 @@
 
             renderer.render(scene, camera);
         }
-        
         animate();
-        
+
         document.addEventListener('keydown', function(event) {
-            if (gameOver) return;  // Prevent movement if the game is over
+            if (gameOver) return;
 
             let shouldSendUpdate = false;
 
-            {% if request.user == room.host %}
-                if (event.key === 'w') {
-                    paddle1.position.y += 0.39;
-                    shouldSendUpdate = true;
-                } else if (event.key === 's') {
-                    paddle1.position.y -= 0.39;
-                    shouldSendUpdate = true;
-                }
+            {% if request.user.username == player1 %}
+            if (event.key === 'w') {
+                paddle1.position.y += 0.39;
+                shouldSendUpdate = true;
+            } else if (event.key === 's') {
+                paddle1.position.y -= 0.39;
+                shouldSendUpdate = true;
+            }
             {% else %}
-                if (event.key === 'ArrowUp') {
-                    paddle2.position.y += 0.39;
-                    shouldSendUpdate = true;
-                } else if (event.key === 'ArrowDown') {
-                    paddle2.position.y -= 0.39;
-                    shouldSendUpdate = true;
-                }
+            if (event.key === 'ArrowUp') {
+                paddle2.position.y += 0.39;
+                shouldSendUpdate = true;
+            } else if (event.key === 'ArrowDown') {
+                paddle2.position.y -= 0.39;
+                shouldSendUpdate = true;
+            }
             {% endif %}
 
             if (shouldSendUpdate) {
@@ -272,6 +304,7 @@
                         ball_angle: ball_angle,
                         type: 'state_update'
                     };
+                    console.log(gameState);
                     socket.send(JSON.stringify(gameState));
                     lastSendTime = currentTime;
                 }
@@ -279,8 +312,8 @@
         });
 
         function updateScoreboard() {
-            document.getElementById('player1-score').textContent = "{{room.host.username}}: " + player1Score;
-            document.getElementById('player2-score').textContent = "Rival: " + player2Score;
+            document.getElementById('player1-score').textContent = "{{player1}}: " + player1Score;
+            document.getElementById('player2-score').textContent = "{{player2}}: " + player2Score;
         }
 
         socket.onmessage = function(e) {
@@ -292,6 +325,7 @@
                     player2Score = data.player2_score;
                     updateScoreboard();
                 } else if (data.type === 'state_update') {
+                    console.log(data);
                     if (data.paddle1 && data.paddle2 && data.ball && 'ball_angle' in data) {
                         paddle1.position.y = data.paddle1.y;
                         paddle2.position.y = data.paddle2.y;
@@ -300,8 +334,7 @@
                         ball_angle = data.ball_angle;
                     }
                 } else if (data.type === 'game_over') {
-                    // Handle game over
-                    gameOver = true; // Stop the game
+                    gameOver = true;
                     document.getElementById('game-over-message').style.display = 'block';
                     document.getElementById('winner').textContent = data.winner;
                 } else {
@@ -314,5 +347,3 @@
     </script>          
 </body>
 </html>
-
-

@@ -28,6 +28,7 @@ urlpatterns = [
 
     # Chat Functionality
     path('pong/<str:pk>/', views.pongPage, name="pong"),
+    path('pongTournament/<str:pk>/<str:split_no>', views.pongPageTournament, name="pongTournament"),
     path('chat/new_groupchat/', views.create_groupchat, name="new-groupchat"),
     path('chat/<username>/', views.get_or_create_chatroom, name="start-chat"),
     path('chat/edit/<chatroom_name>/', views.chatroom_edit_view, name="edit-chatroom"),
