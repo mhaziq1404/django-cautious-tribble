@@ -285,5 +285,3 @@ class PongConsumerTournament(WebsocketConsumer):
         }
         for player in self.rooms[room_key]:
             player.send(text_data=json.dumps(game_over_message))
-
-

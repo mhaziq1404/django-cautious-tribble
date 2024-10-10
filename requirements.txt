@@ -5,6 +5,7 @@ attrs
 autobahn
 Automat
 autopep8
+beautifulsoup4
 cffi
 channels
 channels-redis
@@ -13,6 +14,7 @@ cryptography
 daphne
 Django
 django-allauth
+django-bootstrap-v5
 django-cleanup
 django-cors-headers
 django-htmx
@@ -20,12 +22,12 @@ djangorestframework
 djangorestframework-simplejwt
 hyperlink
 idna
-importlib-metadata
+importlib_metadata
 incremental
 msgpack
-Pillow
+pillow
 pyasn1
-pyasn1-modules
+pyasn1_modules
 pycodestyle
 pycparser
 PyJWT
@@ -33,8 +35,10 @@ pyOpenSSL
 pytz
 redis
 service-identity
+setuptools
 shortuuid
 six
+soupsieve
 sqlparse
 toml
 Twisted

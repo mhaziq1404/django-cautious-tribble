@@ -1,55 +1,55 @@
-<div class="flex-col p-4">
+<div class="d-flex flex-column p-4">
     {% for room in rooms %}
         {% if room.is_expired == False %}
             {% if room.opponent_type == 'AI' or room.opponent_type == 'vs Player'%}
                 {% if room.host == request.user %}
-                    <div class="relative flex flex-col items-center border border-solid border-gray-200 rounded-2xl transition-all duration-500 md:flex-row w-full bg-white">
-                        <div class="block overflow-hidden md:w-52 h-48">
-                            <img src="https://picsum.photos/200/300?random=2" alt="Random GIF" class="h-full rounded-2xl object-cover w-full" />
-                        </div>
-                        <div class="p-4 flex-1">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="text-base font-semibold text-gray-900 capitalize transition-all duration-500">
+                    <div class="position-relative d-flex flex-column align-items-center border border-secondary rounded-3 transition-all duration-500 flex-md-row w-100 bg-white">
+                        <!-- <div class="overflow-hidden w-24 h-24 h-md-100 md-w-52">
+                            <img src="https://picsum.photos/200/300?random=2" alt="Random GIF" class="h-100 rounded-3 object-cover w-100" />
+                        </div> -->
+                        <div class="p-4 flex-grow-1">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h4 class="h5 fw-semibold text-dark text-capitalize transition-all duration-500">
                                     {{ room.name }}
                                 </h4>
-                                <span class="text-sm text-gray-500">{{room.created|timesince}} ago</span>
+                                <span class="text-muted small">{{room.created|timesince}} ago</span>
                             </div>
-                            <p class="text-sm font-normal text-gray-500 transition-all duration-500 leading-5 mb-5">{{ room.description }}</p>
-                            <div class="flex flex-wrap space-x-2 mb-3">
-                                <span class="bg-gray-100 text-gray-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
+                            <p class="small text-muted mb-5">{{ room.description }}</p>
+                            <div class="d-flex flex-wrap mb-3">
+                                <span class="badge bg-light text-dark me-2">
                                     <strong>Points to Win:</strong> {{ room.points }}
                                 </span>
-                                <span class="bg-gray-100 text-gray-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
+                                <span class="badge bg-light text-dark me-2">
                                     <strong>Opponent Type:</strong> {{ room.opponent_type }}
                                 </span>
                             </div>
-                            <a href="{% url 'room' room.id %}" class="btn bg-teal-400 shadow-sm rounded-full py-2 px-5 text-xs text-black font-semibold">Join Room</a>
+                            <a href="{% url 'room' room.id %}" class="btn btn-info shadow-sm rounded-pill py-2 px-5 text-xs text-white fw-semibold">Join Room</a>
                         </div>
                     </div>
                     <br>
                 {% endif %}
             {% else %}
-                <div class="relative flex flex-col items-center border border-solid border-gray-200 rounded-2xl transition-all duration-500 md:flex-row w-full bg-white">
-                    <div class="block overflow-hidden md:w-52 h-48">
-                        <img src="https://picsum.photos/200/300?random=3" alt="Random GIF" class="h-full rounded-2xl object-cover w-full" />
+                <div class="position-relative d-flex flex-column align-items-center border border-secondary rounded-3 transition-all duration-500 flex-md-row w-100 bg-white">
+                    <div class="overflow-hidden w-100 h-48 h-md-100 md-w-52">
+                        <img src="https://picsum.photos/200/300?random=3" alt="Random GIF" class="h-100 rounded-3 object-cover w-100" />
                     </div>
-                    <div class="p-4 flex-1">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="text-base font-semibold text-gray-900 capitalize transition-all duration-500">
+                    <div class="p-4 flex-grow-1">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h4 class="h5 fw-semibold text-dark text-capitalize transition-all duration-500">
                                 {{ room.name }}
                             </h4>
-                            <span class="text-sm text-gray-500">{{room.created|timesince}} ago</span>
+                            <span class="text-muted small">{{room.created|timesince}} ago</span>
                         </div>
-                        <p class="text-sm font-normal text-gray-500 transition-all duration-500 leading-5 mb-5">{{ room.description }}</p>
-                        <div class="flex flex-wrap space-x-2 mb-3">
-                            <span class="bg-gray-100 text-gray-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
+                        <p class="small text-muted mb-5">{{ room.description }}</p>
+                        <div class="d-flex flex-wrap mb-3">
+                            <span class="badge bg-light text-dark me-2">
                                 <strong>Points to Win:</strong> {{ room.points }}
                             </span>
-                            <span class="bg-gray-100 text-gray-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
+                            <span class="badge bg-light text-dark me-2">
                                 <strong>Opponent Type:</strong> {{ room.opponent_type }}
                             </span>
                         </div>
-                        <a href="{% url 'room' room.id %}" class="btn bg-teal-400 hover:bg-teal-500 shadow-sm rounded-full py-2 px-5 text-xs text-black font-semibold">Join Room</a>
+                        <a href="{% url 'room' room.id %}" class="btn btn-info shadow-sm rounded-pill py-2 px-5 text-xs text-white fw-semibold">Join Room</a>
                     </div>
                 </div>
                 <br>

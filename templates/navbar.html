@@ -1,4 +1,4 @@
-{% load static %}
+<!-- {% load static %}
 
 <header class="navbar bg-base-100 p-4 pr-6 z-50 h-[100px]">
   <div class="flex-1">
@@ -7,7 +7,6 @@
   <div class="flex-none">
     {% if request.user.is_authenticated %}
     <div class="flex items-center space-x-4">
-      <!-- Notification Dropdown -->
       <div class="dropdown dropdown-end">
         <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
           <div class="indicator">
@@ -60,7 +59,6 @@
         </div>
     </a>
 
-      <!-- Profile Dropdown -->
       <div class="dropdown dropdown-end">
         <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
           <div class="w-10 rounded-full">
@@ -109,4 +107,80 @@
       }
     }
   });
-</script>
+</script> -->
+
+<header class="navbar navbar-expand-lg navbar-light bg-light py-3 shadow-sm">
+  <div class="container-fluid">
+    <a href="{% url 'home' %}" class="navbar-brand text-black fw-bold fs-5">FT_TRANSCENDENCE</a>
+
+    <div class="collapse navbar-collapse justify-content-end">
+      {% if request.user.is_authenticated %}
+      <div class="d-flex align-items-center">
+        <!-- Notification Dropdown -->
+        <div class="dropdown me-3">
+          <button class="btn btn-light position-relative" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24" height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-count">
+            </span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton1">
+            <li>
+              <div id="room-list" 
+                   hx-get="{% url 'noti_list' %}" 
+                   hx-trigger="load, every 3s" 
+                   hx-swap="innerHTML">
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Messages Dropdown -->
+        <div class="dropdown me-3">
+          <a class="btn btn-light position-relative" type="button" href="{% url 'messages' %}">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24" height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 8l7.89 5.26c.58.39 1.36.39 1.94 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-count">
+            </span>
+          </a>
+        </div>
+
+        <!-- Profile Dropdown -->
+        <div class="dropdown">
+          <button class="btn btn-light p-0 border-0" type="button" id="dropdownMenuButton3" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="{{ request.user.avatar.url }}" class="rounded-circle" width="40" height="40" alt="User Avatar">
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton3">
+            <li><a class="dropdown-item" href="{% url 'user-profile' user.id %}">Profile <span class="badge bg-primary ms-2">New</span></a></li>
+            <li><a class="dropdown-item" href="{% url 'update-user' %}">Settings</a></li>
+            <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+          </ul>
+        </div>
+      </div>
+      {% else %}
+      <a class="btn btn-outline-primary ms-auto" href="{% url 'login' %}">Login</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+

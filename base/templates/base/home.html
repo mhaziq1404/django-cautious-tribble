@@ -2,78 +2,82 @@
 
 {% block content %}
 
-<main class="flex flex-col pt-4 pl-8 pr-8 pb-4 h-[calc(100vh-100px)] bg-gray-900">
+<main class="d-flex flex-column pt-4 ps-4 pe-4 pb-4 h-100" style="background-color: #1a202c;">
   <!-- New Container -->
-  <div class="w-full mb-4 bg-gray-800 p-6 rounded-md text-center">
-    <p class="text-white text-xl mb-4">Welcome to the Ultimate Pong Game Web App!</p>
-    <p class="text-gray-300 mb-6">Join us for an exciting and competitive experience. Challenge your friends or meet new players from the campus. Let the games begin!</p>
-    <div class="flex justify-center space-x-4">
-      <a href="{% url 'ai_playnow' %}" class="btn btn-wide bg-teal-500 text-white font-semibold py-2 px-4 rounded hover:bg-teal-600 transition duration-300 ease-in-out">
+  <div class="w-100 mb-4 p-4 text-center rounded bg-dark">
+    <p class="text-white fs-4 mb-3">Welcome to the Ultimate Pong Game Web App!</p>
+    <p class="text-secondary mb-4">Join us for an exciting and competitive experience. Challenge your friends or meet new players from the campus. Let the games begin!</p>
+    <div class="d-flex justify-content-center gap-3">
+      <a href="{% url 'ai_playnow' %}" class="btn btn-teal text-white fw-semibold px-4 py-2">
         Play Now
       </a>
-      <a href="#" id="joinRoomBtn" class="btn btn-wide bg-indigo-500 text-white font-semibold py-2 px-4 rounded hover:bg-indigo-600 transition duration-300 ease-in-out">
+      <a href="#" id="joinRoomBtn" class="btn btn-indigo text-white fw-semibold px-4 py-2">
         Join a Room
       </a>
     </div>
   </div>
 
-    <!-- Modal Structure -->
-    <div id="joinRoomModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
-      <div class="bg-white rounded-lg p-6 w-full max-w-md">
-          <h2 class="text-xl font-semibold mb-4">Enter Invitation Link</h2>
-          <form id="joinRoomForm" action="{% url 'join_room' %}" method="POST">
-              {% csrf_token %}
-              <input type="text" name="invitation_link" placeholder="Paste your invitation link here" class="w-full px-4 py-2 border rounded-md mb-4">
-              <div class="flex justify-end">
-                  <button type="button" id="cancelBtn" class="bg-gray-500 text-white font-semibold py-2 px-4 rounded hover:bg-gray-600 transition duration-300 ease-in-out">Cancel</button>
-                  <button type="submit" class="ml-2 bg-teal-500 text-white font-semibold py-2 px-4 rounded hover:bg-teal-600 transition duration-300 ease-in-out">Join</button>
-              </div>
-          </form>
-      </div>
+  <!-- Modal Structure -->
+  <div id="joinRoomModal" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50 d-none z-index-100">
+    <div class="bg-white rounded p-4" style="max-width: 500px; width: 100%;">
+      <h2 class="fs-5 fw-semibold mb-3">Enter Invitation Link</h2>
+      <form id="joinRoomForm" action="{% url 'join_room' %}" method="POST">
+        {% csrf_token %}
+        <input type="text" name="invitation_link" placeholder="Paste your invitation link here" class="form-control mb-3">
+        <div class="d-flex justify-content-end">
+          <button type="button" id="cancelBtn" class="btn btn-secondary me-2">Cancel</button>
+          <button type="submit" class="btn btn-teal">Join</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- JavaScript to Handle Modal -->
-    <script>
-      document.getElementById('joinRoomBtn').addEventListener('click', function(event) {
-          event.preventDefault();  // Prevent the default link behavior
-          document.getElementById('joinRoomModal').classList.remove('hidden');
-      });
+  <!-- JavaScript to Handle Modal -->
+  <script>
+    document.getElementById('joinRoomBtn').addEventListener('click', function(event) {
+      event.preventDefault();
+      document.getElementById('joinRoomModal').classList.remove('d-none');
+    });
 
-      document.getElementById('cancelBtn').addEventListener('click', function() {
-          document.getElementById('joinRoomModal').classList.add('hidden');
-      });
-    </script>
+    document.getElementById('cancelBtn').addEventListener('click', function() {
+      document.getElementById('joinRoomModal').classList.add('d-none');
+    });
+  </script>
 
   <!-- Existing Containers -->
-  <div class="flex flex-row h-full">
-    <div class="w-2/5 bg-gray-900 rounded-tl-md rounded-bl-md flex flex-col">
-      <div class="h-20 bg-gray-900">
-        <div class="flex w-full justify-between items-center">
-          <div>
-            <p class="text-teal-400">Game Room</p>
-            <p class="text-teal-400">{{room_count}} Active Rooms</p>
-          </div>
-          <div>
-            <a class="btn btn-wide flex items-center bg-teal-500 border-teal-500 hover:bg-teal-600 hover:border-teal-700 text-white" href="{% url 'create-room' %}">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="white">
-                <title>add</title>
-                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-              </svg>
-              Create Room
-            </a>
+  <div class="d-flex flex-row h-100 gap-4">
+    <div class="bg-dark d-flex flex-column" style="width: 40%;">
+      <div class="bg-dark rounded" style="height: 100%;">
+        <div class="d-flex flex-column h-100">
+          <!-- Container that is 20% of the height of the parent container -->
+          <div class="bg-dark d-flex flex-column" style="flex: 0 0 10%;">
+            <div class="d-flex justify-content-between align-items-center p-3">
+              <div>
+                <p class="text-light mb-1">Game Room</p>
+                <p class="text-light mb-0">{{ room_count }} Active Rooms</p>
+              </div>
+              <div>
+                <a href="{% url 'create-room' %}">
+                  <button type="button" class="btn btn-primary">Create Room</button>
+                </a>
+              </div>
+            </div>
+          </div>          
+      
+          <!-- Container that is 80% of the height of the parent container -->
+          <div class="bg-light">
+            {% include 'room/room_list.html' %}
           </div>
         </div>
       </div>
-      <div id="room_list_container" class="flex-1 overflow-auto">
-        {% include 'room/room_list.html' %}
-      </div>
+      
     </div>
-    <div class="w-3/5 bg-gray-900 pl-6 rounded-tr-md rounded-br-md">
+      
+    <div class="bg-dark rounded col-7">
       {% include 'chat/chat.html' %}
     </div>
-  </div>
+</div>
+  
 </main>
-
-
 
 {% endblock %}

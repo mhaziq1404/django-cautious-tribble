@@ -2,51 +2,51 @@
 
 {% block content %}
 
-<main class="h-[calc(100vh-100px)]">
-  <div class="isolate bg-white px-6 py-10 sm:py-20 lg:px-8">
-    <div class="absolute inset-x-0 top-[-10rem] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[-20rem]" aria-hidden="true">
-      <div class="relative left-1/2 -z-10 aspect-[1155/678] w-[36.125rem] max-w-none -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-40rem)] sm:w-[72.1875rem]" style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"></div>
+<main class="h-100">
+  <div class="bg-white" style="padding-left: 1.5rem; padding-right: 1.5rem; padding-top: 2.5rem; padding-bottom: 2.5rem;">
+    <div class="position-absolute" style="left: 0; right: 0; top: -10rem; z-index: -10; overflow: hidden; filter: blur(30px);" aria-hidden="true">
+      <div class="position-relative" style="left: 50%; z-index: -10; width: 36.125rem; max-width: none; transform: translateX(-50%) rotate(30deg); background: linear-gradient(to top right, #ff80b5, #9089fc); opacity: 0.3; clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%); opacity: 0.3;"></div>
     </div>
-    <div class="mx-auto max-w-2xl text-center">
-      <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Create/Update Game Room</h2>
+    <div class="mx-auto" style="max-width: 42rem; text-align: center;">
+      <h2 class="display-6 fw-bold text-dark" style="letter-spacing: -0.015em;">Create/Update Game Room</h2>
     </div>
     <form method="POST"
       hx-target="#room_list_container"
-      hx-swap="innerHTML" method="POST" class="mx-auto mt-10 max-w-xl sm:mt-14">
+      hx-swap="innerHTML" method="POST" class="mx-auto" style="margin-top: 2.5rem; max-width: 36rem;">
       {% csrf_token %}
-      <div class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-        <div class="sm:col-span-2">
-          <label for="name" class="block text-sm font-semibold leading-6 text-black">Room Name</label>
-          <div class="mt-2.5">
-            <input type="text" name="name" maxlength="200" required="" id="id_name" class="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset shadow-blue-500 ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-400 sm:text-sm sm:leading-6">
+      <div class="row gap-3">
+        <div class="col-12 col-sm-12">
+          <label for="name" class="d-block" style="font-size: 0.875rem; font-weight: 600; line-height: 1.5; color: #000;">Room Name</label>
+          <div style="margin-top: 0.625rem;">
+            <input type="text" name="name" maxlength="200" required="" id="id_name" class="form-control" style="width: 100%; border: none; padding: 0.5rem 1rem; color: #212529; border-radius: 0.375rem; box-shadow: 0 0.125rem 0.25rem rgba(0, 123, 255, 0.5); outline: none; transition: box-shadow 0.2s;">
           </div>
         </div>
-        <div class="sm:col-span-2">
-          <label for="points" class="block text-sm font-semibold leading-6 text-black">Points to Win</label>
-          <div class="mt-2.5">
-            <input type="number" name="points" value="0" required id="id_points" max="21" min="0" class="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset shadow-blue-500 ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-400 sm:text-sm sm:leading-6">
+        <div class="col-12 col-sm-12">
+          <label for="points" class="d-block" style="font-size: 0.875rem; font-weight: 600; line-height: 1.5; color: #000;">Points to Win</label>
+          <div style="margin-top: 0.625rem;">
+            <input type="number" name="points" value="0" required id="id_points" max="21" min="0" class="form-control" style="width: 100%; border: none; padding: 0.5rem 1rem; color: #212529; border-radius: 0.375rem; box-shadow: 0 0.125rem 0.25rem rgba(0, 123, 255, 0.5); outline: none; transition: box-shadow 0.2s;">
           </div>
         </div>
-        <div class="sm:col-span-2">
-          <label for="points" class="block text-sm font-semibold leading-6 text-black">Opponent Type</label>
-          <div class="mt-2.5">
-            <select id="id_opponent_type" name="opponent_type" class="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset shadow-blue-500 ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-400 sm:text-sm sm:leading-6">
+        <div class="col-12 col-sm-12">
+          <label for="points" class="d-block" style="font-size: 0.875rem; font-weight: 600; line-height: 1.5; color: #000;">Opponent Type</label>
+          <div style="margin-top: 0.625rem;">
+            <select id="id_opponent_type" name="opponent_type" class="form-control" style="width: 100%; border: none; padding: 0.5rem 1rem; color: #212529; border-radius: 0.375rem; box-shadow: 0 0.125rem 0.25rem rgba(0, 123, 255, 0.5); outline: none; transition: box-shadow 0.2s;">
               <option value="vs Player">vs Player</option>
               <option value="Tournament">Tournament</option>
               <!-- <option value="AI">AI</option> -->
             </select>
           </div>
         </div>
-        <div class="sm:col-span-2">
-          <label for="description" class="block text-sm font-semibold leading-6 text-black">Room Description</label>
-          <div class="mt-2.5">
-            <textarea name="description" cols="40" rows="10" id="id_description" class="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"></textarea>
+        <div class="col-12 col-sm-12">
+          <label for="description" class="d-block" style="font-size: 0.875rem; font-weight: 600; line-height: 1.5; color: #000;">Room Description</label>
+          <div style="margin-top: 0.625rem;">
+            <textarea name="description" cols="40" rows="3" id="id_description" class="form-control" style="width: 100%; border: none; padding: 0.5rem 1rem; color: #212529; border-radius: 0.375rem; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1); outline: none; transition: box-shadow 0.2s;" placeholder="Your placeholder text" onfocus="this.style.boxShadow='0 0 0 2px rgba(99, 102, 241, 0.5)';" onblur="this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.1)';"></textarea>
           </div>
         </div>
       </div>
-      <div class="mt-10 flex space-x-4">
-        <a href="{% url 'home' %}" class="btn flex-1 rounded-md bg-cyan-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Cancel</a>
-        <button type="submit" class="flex-1 rounded-md bg-cyan-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Create</button>
+      <div style="margin-top: 2.5rem;" class="d-flex gap-3" style="gap: 1rem;">
+        <a href="{% url 'home' %}" class="btn" style="flex: 1; border-radius: 0.375rem; background-color: #06b6d4; padding: 0.625rem 0.875rem; color: white; text-align: center; font-size: 0.875rem; font-weight: 600; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1); transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#22c55e';" onfocus="this.style.outline='2px solid #4f46e5';" onblur="this.style.outline='none';">Cancel</a>
+        <button type="submit" class="btn" style="flex: 1; border-radius: 0.375rem; background-color: #06b6d4; padding: 0.625rem 0.875rem; color: white; text-align: center; font-size: 0.875rem; font-weight: 600; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1); transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#22c55e';" onfocus="this.style.outline='2px solid #4f46e5';" onblur="this.style.outline='none';">Create</button>
       </div>
     </form>
   </div>

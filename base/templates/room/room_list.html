@@ -2,6 +2,6 @@
         hx-get="{% url 'room_list' %}" 
         hx-trigger="load, every 3s" 
         hx-swap="innerHTML" 
-        class=" h-[calc(100vh-401px)] bg-gray-900 overflow-scroll">
+        class="bg-dark overflow-auto" style="height: calc(100vh - 420px);">
         {% include 'room/partials/room_list.html' %}
 </div>
